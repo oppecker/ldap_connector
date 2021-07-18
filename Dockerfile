@@ -4,7 +4,7 @@ FROM python:3.8-slim-buster
 
 WORKDIR /app
 
-ENV FLASK_APP=app.py
+ENV FLASK_APP=ldap_connector/app.py
 ENV FLASK_RUN_HOST=0.0.0.0
 
 COPY requirements.txt requirements.txt
