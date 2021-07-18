@@ -1,0 +1,15 @@
+Docker-Compose Commands:
+docker-compose up -d
+docker-compose up --build -d
+docker-compose down --volumes
+
+############################################################
+Initial Commands:
+    docker build --tag ldap_connector .
+    docker run -d -p 5000:5000 --name connector_server ldap_connector
+
+Update Code Commands:
+    docker rm -f connector_server
+    docker rmi ldap_connector
+    docker build --tag ldap_connector .
+    docker run -d -p 5000:5000 --name connector_server ldap_connector
