@@ -1,15 +1,9 @@
 Docker-Compose Commands:
-docker-compose up -d
-docker-compose up --build -d
-docker-compose down --volumes
-
-############################################################
-Initial Commands:
-    docker build --tag ldap_connector .
-    docker run -d -p 5000:5000 --name connector_server ldap_connector
-
-Update Code Commands:
-    docker rm -f connector_server
-    docker rmi ldap_connector
-    docker build --tag ldap_connector .
-    docker run -d -p 5000:5000 --name connector_server ldap_connector
+Create what is necessary and start detatched:
+  docker-compose up -d
+Force rebuild and start detached:
+  docker-compose up --build -d
+Stop services:
+  docker-compose stop
+Stop services and remove containers and data volumes.
+  docker-compose down --volumes
