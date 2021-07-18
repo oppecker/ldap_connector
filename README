@@ -7,3 +7,8 @@ Stop services:
   docker-compose stop
 Stop services and remove containers and data volumes.
   docker-compose down --volumes
+
+
+Docker Commands:
+Delete ALL unused images:
+  docker image prune --all
