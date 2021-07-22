@@ -2,7 +2,7 @@ from flask import Flask
 app = Flask(__name__)
 
 @app.route('/')
-def ldap_connector():
+def ldap_agent():
     return 'Welcome To LDAP Connector'
 
 @app.route('/ldap_config')
@@ -24,11 +24,11 @@ def run_audit():
     send_alerts(alerts)
     return 'Running Audit'
 
-def get_ldap_accounts():
+def get_ldap_users():
     ''' Queries ldap server for list of current ldap users. '''
     return []
 
-def get_aws_accounts():
+def get_aws_users():
     ''' Queries AWS iam service for list of current aws users. '''
     return []
 
