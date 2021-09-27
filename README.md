@@ -12,3 +12,5 @@
 - **Docker Commands:**
   - Delete ALL unused images:
     - docker image prune --all
+  - Get IP address for container
+    - docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container_name>

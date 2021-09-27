@@ -1,3 +1,6 @@
+import ldap
+import os
+
 from flask import Flask
 app = Flask(__name__)
 
@@ -5,7 +8,7 @@ app = Flask(__name__)
 def ldap_agent():
     return 'Welcome To LDAP Connector'
 
-@app.route('/ldap_config')
+@app.route('/ldap_config', methods = ['POST'])
 def ldap_config():
     ''' Configure connection to ldap server. Save data for reuse. '''
     return 'Configure LDAP'
@@ -24,9 +27,18 @@ def run_audit():
     send_alerts(alerts)
     return 'Running Audit'
 
+@app.route('/get_users', methods = ['GET'])
 def get_ldap_users():
     ''' Queries ldap server for list of current ldap users. '''
-    return []
+    ldap.set_option(ldap.OPT_REFERRALS, 0)
+    connect = ldap.initialize(f"ldap://{os.environ['LDAP_IP']}")
+    connect.simple_bind_s(os.environ['LDAP_ADMIN'], os.environ['LDAP_ADMIN_PW'])
+    result = connect.search_s(
+        'dc=example,dc=com',
+        ldap.SCOPE_SUBTREE,
+        'objectClass=*',
+    )
+    return str(result)
 
 def get_aws_users():
     ''' Queries AWS iam service for list of current aws users. '''
