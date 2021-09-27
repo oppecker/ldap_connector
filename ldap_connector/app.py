@@ -17,7 +17,7 @@ def config():
     data = request.get_json()
     configurables = [
         'LDAP_ADMIN','LDAP_ADMIN_PW','LDAP_IP',
-        'EXPIIRE_URL','EXPIIRE_USER','EXPIIRE_PW','EXPIIRE_COMPANY_ID',
+        'EXPIIRE_URL','EXPIIRE_USER','EXPIIRE_PW','EXPIIRE_COMPANY_ID', 'EXPIIRE_ACCOUNT_ID', 'EXPIIRE_ACCOUNT_NUMBER',
     ]
     for key, value in data.items():
         if key in configurables:
