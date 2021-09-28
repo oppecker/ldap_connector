@@ -39,6 +39,7 @@ def set_expiire_auth():
 
     token = json.loads(r.text)['access_token']
     os.environ['EXPIIRE_AUTH'] = f"Bearer {token}"
+    return os.environ['EXPIIRE_AUTH']
 
 @app.route('/run_audit')
 def run_audit():
@@ -46,8 +47,9 @@ def run_audit():
     ldap_users = get_ldap_users()
     cloud_users = get_cloud_users()
     usernames = _compare_accounts(ldap_users, cloud_users)
-    alert_ids = send_alerts(usernames)
-    return f"Created Alerts: {alert_ids}"
+    #alert_ids = send_alerts(usernames)
+    #return f"Created Alerts: {alert_ids}"
+    return f"{usernames}"
 
 @app.route('/get_ldap_users', methods = ['GET'])
 def get_ldap_users():
@@ -60,13 +62,13 @@ def get_ldap_users():
         ldap.SCOPE_SUBTREE,
         'objectClass=*',
     )
-    return json.dumps(str(result))
+    return result
 
 @app.route('/get_cloud_users', methods = ['GET'])
 def get_cloud_users():
     ''' Queries EXPIIRE service for list of users. '''
     set_expiire_auth()
-    url = f"{os.environ['EXPIIRE_URL']}/clouduser?company_id={os.environ[EXPIIRE_COMPANY_ID]}"
+    url = f"{os.environ['EXPIIRE_URL']}/clouduser?company_id={os.environ['EXPIIRE_COMPANY_ID']}"
 
     headers = {
         'Content-Type': 'application/javascript',
@@ -74,6 +76,7 @@ def get_cloud_users():
     }
     r = requests.get(url, headers=headers)
     _debug_request(r)
+    #return str(json.loads(r.text))
     return json.loads(r.text)
 
 def send_alerts(usernames):
@@ -91,12 +94,16 @@ def send_alerts(usernames):
 
 def _compare_accounts(ldap_users, cloud_users):
     ''' Return usernames for accounts in EXPIIRE that are not in LDAP. '''
-    #TODO: MAKE REAL NOT PSEUDOCODE
-    usernames = []
+    ldap_user_names = []
+    for user in ldap_users:
+        if user[1].get('uid'):
+            ldap_user_names.append(user[1]['uid'][1].decode())
+    user_alerts = []
     for user in cloud_users:
-        if user not in ldap_users:
-            user_alerts.append(user)
-    return usernames
+        cloud_user_name = user['name']
+        if cloud_user_name not in ldap_user_names:
+            user_alerts.append(cloud_user_name)
+    return user_alerts
 
 def _debug_request(r):
     if 1:
