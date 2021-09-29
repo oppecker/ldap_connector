@@ -17,7 +17,7 @@ def config():
     data = request.get_json()
     configurables = [
         'LDAP_ADMIN','LDAP_ADMIN_PW','LDAP_IP',
-        'EXPIIRE_URL','EXPIIRE_USER','EXPIIRE_PW','EXPIIRE_COMPANY_ID', 'EXPIIRE_ACCOUNT_ID', 'EXPIIRE_ACCOUNT_NUMBER',
+        'EXPIIRE_URL','EXPIIRE_PW','EXPIIRE_COMPANY_ID',
     ]
     for key, value in data.items():
         if key in configurables:
@@ -31,7 +31,7 @@ def set_expiire_auth():
         'Content-Type': 'application/javascript',
     }
     data = {
-        'user_name': os.environ['EXPIIRE_USER'],
+        'user_name': f"LdapAgent_{os.environ['EXPIIRE_COMPANY_ID']}",
         'password': os.environ['EXPIIRE_PW'],
     }
     r = requests.post(url, headers=headers, data=json.dumps(data))
@@ -46,10 +46,11 @@ def run_audit():
     ''' Get ldap and aws accounts, create alerts from differences, send alerts to API. '''
     ldap_users = get_ldap_users()
     cloud_users = get_cloud_users()
-    usernames = _compare_accounts(ldap_users, cloud_users)
+    sus_users = _compare_accounts(ldap_users, cloud_users)
+    return f"{ldap_users}\n\n\n\n{cloud_users}\n\n\n\n{sus_users}"
     #alert_ids = send_alerts(usernames)
     #return f"Created Alerts: {alert_ids}"
-    return f"{usernames}"
+    #return f"{usernames}"
 
 @app.route('/get_ldap_users', methods = ['GET'])
 def get_ldap_users():
@@ -85,24 +86,29 @@ def send_alerts(usernames):
     for user in usernames:
         alert_id = create_alert(
             company_id = os.environ['EXPIIRE_COMPANY_ID'],
-            account_id = os.environ['EXPIIRE_ACCOUNT_ID'],
-            account_number = os.environ['EXPIIRE_ACCOUNT_NUMBER'],
-            iam_user_name = user,
+            account_id = user['account_id'],
+            user_id = user['user_id'],
+            account_number = user['account_number'],
+            iam_user_name = user['name'],
         )
         alert_ids.append(alert_id)
     return alert_ids
 
 def _compare_accounts(ldap_users, cloud_users):
     ''' Return usernames for accounts in EXPIIRE that are not in LDAP. '''
-    ldap_user_names = []
+    ldap_names = []
     for user in ldap_users:
         if user[1].get('uid'):
-            ldap_user_names.append(user[1]['uid'][1].decode())
+            ldap_names.append({'name': user[1]['uid'][1].decode()})
     user_alerts = []
     for user in cloud_users:
-        cloud_user_name = user['name']
-        if cloud_user_name not in ldap_user_names:
-            user_alerts.append(cloud_user_name)
+        if user['name'] not in ldap_names:
+            user_alerts.append({
+                'name': user['name'],
+                'user_id': user['user_id'],
+                'account_number': user['account_number'],
+                'account_id': user['account_id'],
+            })
     return user_alerts
 
 def _debug_request(r):
@@ -115,6 +121,7 @@ def _debug_request(r):
 def create_alert(
     company_id, 
     account_id, 
+    user_id,
     account_number, 
     iam_user_name, 
     cloud_service="AWS", 
@@ -134,6 +141,7 @@ def create_alert(
         "iam_user_name" : iam_user_name,
         "cloud_service" : cloud_service,
         "alert_status" : alert_status,
+        "user_id": user_id,
     }
 
     r = requests.post(url, headers=headers, data=json.dumps(alert_data))
