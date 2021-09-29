@@ -3,6 +3,7 @@ import ldap
 import os
 import requests
 
+import flask
 from flask import Flask
 from flask import request
 app = Flask(__name__)
@@ -47,10 +48,11 @@ def run_audit():
     ldap_users = get_ldap_users()
     cloud_users = get_cloud_users()
     sus_users = _compare_accounts(ldap_users, cloud_users)
-    return f"{ldap_users}\n\n\n\n{cloud_users}\n\n\n\n{sus_users}"
-    #alert_ids = send_alerts(usernames)
+    alert_ids = send_alerts(sus_users)
+    return flask.Response(f"Created Alerts: {alert_ids}", mimetype='text/html')
     #return f"Created Alerts: {alert_ids}"
     #return f"{usernames}"
+    #return flask.Response(f"LDAP_USERS: {ldap_users}<br><br>CLOUD_USERS: {cloud_users}<br><br>SUS_USERS: {sus_users}", mimetype='text/html')
 
 @app.route('/get_ldap_users', methods = ['GET'])
 def get_ldap_users():
@@ -80,10 +82,10 @@ def get_cloud_users():
     #return str(json.loads(r.text))
     return json.loads(r.text)
 
-def send_alerts(usernames):
+def send_alerts(sus_users):
     ''' Uses TLS connection to send alert messages to cloud API. '''
     alert_ids = []
-    for user in usernames:
+    for user in sus_users:
         alert_id = create_alert(
             company_id = os.environ['EXPIIRE_COMPANY_ID'],
             account_id = user['account_id'],
@@ -99,7 +101,7 @@ def _compare_accounts(ldap_users, cloud_users):
     ldap_names = []
     for user in ldap_users:
         if user[1].get('uid'):
-            ldap_names.append({'name': user[1]['uid'][1].decode()})
+            ldap_names.append(user[1]['uid'][1].decode())
     user_alerts = []
     for user in cloud_users:
         if user['name'] not in ldap_names:
