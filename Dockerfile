@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y gcc python-dev libldap2-dev libsasl2-de
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 
-COPY . .
+COPY run_audit.py .
 
-CMD ["run_audit.py"]
 ENTRYPOINT ["python3"]
+CMD ["run_audit.py"]
